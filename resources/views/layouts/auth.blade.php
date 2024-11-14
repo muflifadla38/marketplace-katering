@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSRF Token -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="{{ asset('media/logo/favicon.ico') }}" />
+
+  <title>{{ config('app.name', 'Laravel') }}</title>
+
+  <!-- Fonts -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" rel="stylesheet">
+
+  <!-- Metronic Styles -->
+  <link rel="stylesheet" href="{{ asset('plugins/global/plugins.bundle.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/style.bundle.css') }}">
+
+  <!-- Scripts -->
+  @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+</head>
+
+<body id="kt_body" class="app-blank bgi-size-cover bgi-attachment-fixed bgi-position-center"
+  data-kt-app-page-loading-enabled="true" data-kt-app-page-loading="on">
+  <!--begin::Theme mode setup on page load-->
+  <script>
+    var defaultThemeMode = "light";
+    var themeMode;
+    if (document.documentElement) {
+      if (document.documentElement.hasAttribute("data-bs-theme-mode")) {
+        themeMode = document.documentElement.getAttribute("data-bs-theme-mode");
+      } else {
+        if (localStorage.getItem("data-bs-theme") !== null) {
+          themeMode = localStorage.getItem("data-bs-theme");
+        } else {
+          themeMode = defaultThemeMode;
+        }
+      }
+      if (themeMode === "system") {
+        themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-bs-theme", themeMode);
+    }
+  </script>
+
+  <x-atoms.page-loader />
+
+  <div class="d-flex flex-column flex-root" id="kt_app_root">
+    @yield('content')
+  </div>
+
+  <script src="{{ asset('plugins/global/plugins.bundle.js') }}"></script>
+  <script src="{{ asset('js/scripts.bundle.js') }}"></script>
+  @stack('scripts')
+</body>
+
+</html>
