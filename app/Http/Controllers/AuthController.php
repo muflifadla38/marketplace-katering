@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Traits\SiteTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
+    use SiteTrait;
+
     public function login()
     {
         $title = 'Login';
@@ -17,47 +20,57 @@ class AuthController extends Controller
 
     public function authenticate(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|string|email',
+                'password' => 'required|string',
+            ]);
 
-        if (auth()->attempt($credentials)) {
-            $request->session()->regenerate();
+            $message = 'Email atau password salah!';
+            if (auth()->attempt($credentials)) {
+                $request->session()->regenerate();
 
-            return redirect()->route('dashboard.index');
+                $message = 'Berhasil login!';
+            }
+
+            $result = ['status' => 'success', 'message' => $message];
+        } catch (\Exception $e) {
+            $result = ['status' => 'error', 'message' => $e->getMessage()];
         }
 
-        return back()->with('alert', [
-            'status' => 'error',
-            'message' => 'Email atau password yang dimasukkan salah!',
-        ]);
+        return response()->json($result);
     }
 
-    public function register()
+    public function register($role)
     {
         $title = 'Register';
 
-        return view('auth.register', compact('title'));
+        return view('auth.register', compact('title', 'role'));
     }
 
-    public function store(Request $request)
+    public function store($role, Request $request)
     {
         try {
             DB::beginTransaction();
 
             $data = $request->validate([
                 'name' => 'required|string|max:255',
-                'image' => 'nullable|image|mimes:png,jpg|max:1024',
+                'image' => 'required|image|mimes:jpeg,png,jpg|max:1024',
+                'phone' => 'nullable|string|max:255',
+                'address' => 'nullable|string|max:255',
+                'description' => 'nullable|string|max:1000',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
             ]);
+
+            $data['role_id'] = $role == 'merchant' ? 1 : 2;
+            $data['image'] = $this->storeFile($request->image, 'users');
 
             User::create($data);
 
             DB::commit();
 
-            $result = ['status' => 'success', 'message' => 'Berhasil membuat akun!'];
+            $result = ['status' => 'success', 'message' => "Berhasil membuat akun $role! Silahkan login untuk melanjutkan!"];
         } catch (\Exception $e) {
             DB::rollback();
             $result = ['status' => 'error', 'message' => $e->getMessage()];
@@ -73,6 +86,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('auth.login');
     }
 }

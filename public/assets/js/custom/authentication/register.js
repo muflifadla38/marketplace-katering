@@ -95,18 +95,43 @@ var KTSignupGeneral = (function () {
                         },
                     };
 
+                    const formData = new FormData();
+                    formData.append("image", $("#image")[0].files[0]);
+                    formData.append("name", $('[name="name"]').val());
+
+                    if ($('[name="phone"]').length) {
+                        formData.append("phone", $('[name="phone"]').val());
+                    }
+
+                    if ($('[name="address"]').length) {
+                        formData.append("address", $('[name="address"]').val());
+                    }
+
+                    if ($('[name="description"]').length) {
+                        formData.append(
+                            "description",
+                            $('[name="description"]').val()
+                        );
+                    }
+
+                    formData.append("email", $('[name="email"]').val());
+                    formData.append("password", $('[name="password"]').val());
+                    formData.append(
+                        "password_confirmation",
+                        $('[name="password_confirmation"]').val()
+                    );
+
                     $.ajax({
-                        url: `/register`,
+                        url: window.location.href,
                         type: "POST",
                         cache: false,
-                        data: {
-                            name: $('[name="name"]').val(),
-                            email: $('[name="email"]').val(),
-                            password: $('[name="password"]').val(),
-                            password_confirmation: $(
-                                '[name="password_confirmation"]'
-                            ).val(),
-                            _token: $('[name="csrf-token"]').attr("content"),
+                        contentType: false,
+                        processData: false,
+                        data: formData,
+                        headers: {
+                            "X-CSRF-TOKEN": $('[name="csrf-token"]').attr(
+                                "content"
+                            ),
                         },
                     })
                         .done((response) => {

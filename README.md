@@ -4,9 +4,6 @@
 ![PHP Version](https://img.shields.io/badge/PHP-8.3-blue)
 ![Laravel Version](https://img.shields.io/badge/Laravel-10-orange)
 
-This is a Laravel-based quotation project that uses the Filament for building modern and feature-rich dashboards.
-
-
 ## Requirements
 
 - PHP >= 8.1
@@ -22,33 +19,30 @@ Follow these steps to set up the project on your local machine:
 1. **Clone the Repository:**
    ```bash
    git clone https://github.com/muflifadla38/marketplace-katering.git
-   cd filament-quotation
+   cd marketplace-katering
 
 2. **Install Dependencies:**
    ```bash
    composer install
    npm install
 
-3. **Configure Vendor:** <br/>
-   Copy folder ```backup/vendor``` to ```vendor```
-
-4. **Generate Application Key:**
+3. **Generate Application Key:**
    ```bash
    php artisan key:generate
 
-5. **Run Database Migrations & Seeders:**
+4. **Run Database Migrations & Seeders:**
    ```bash
    php artisan migrate
    php artisan db:seed
 
-6. **Start the Development Server:**
+5. **Start the Development Server:**
    ```bash
    npm run dev
    php artisan serve
 
 
 ## Usage
-This dashboard core provides a foundation for generate quotation. You can extend it by adding your own components, modules, and features.
+This dashboard provides a foundation for marketplace katering. You can extend it by adding your own components, modules, and features.
 
 
 ## Contributing

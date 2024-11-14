@@ -71,7 +71,7 @@ var KTSigninGeneral = (function () {
                     };
 
                     $.ajax({
-                        url: `/login`,
+                        url: window.location.href,
                         type: "POST",
                         cache: false,
                         data: {

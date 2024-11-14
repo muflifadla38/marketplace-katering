@@ -8,25 +8,38 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
-    <link rel="shortcut icon" href="{{ asset('media/logo/favicon.ico') }}" />
+    <link rel="shortcut icon" href="{{ asset('assets/media/logo/favicon.ico') }}" />
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" rel="stylesheet">
 
     <!-- Metronic Styles -->
-    <link rel="stylesheet" href="{{ asset('plugins/global/plugins.bundle.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.bundle.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/plugins/global/plugins.bundle.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/style.bundle.css') }}">
     @stack('styles')
-
-    <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 
 <body id="kt_body" class="app-blank bgi-size-cover bgi-position-center bgi-no-repeat">
     <!--begin::Theme mode setup on page load-->
     <script>
-        var defaultThemeMode = "light"; var themeMode; if ( document.documentElement ) { if ( document.documentElement.hasAttribute("data-bs-theme-mode")) { themeMode = document.documentElement.getAttribute("data-bs-theme-mode"); } else { if ( localStorage.getItem("data-bs-theme") !== null ) { themeMode = localStorage.getItem("data-bs-theme"); } else { themeMode = defaultThemeMode; } } if (themeMode === "system") { themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } document.documentElement.setAttribute("data-bs-theme", themeMode); }
+        var defaultThemeMode = "light";
+        var themeMode;
+        if (document.documentElement) {
+            if (document.documentElement.hasAttribute("data-bs-theme-mode")) {
+                themeMode = document.documentElement.getAttribute("data-bs-theme-mode");
+            } else {
+                if (localStorage.getItem("data-bs-theme") !== null) {
+                    themeMode = localStorage.getItem("data-bs-theme");
+                } else {
+                    themeMode = defaultThemeMode;
+                }
+            }
+            if (themeMode === "system") {
+                themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            }
+            document.documentElement.setAttribute("data-bs-theme", themeMode);
+        }
     </script>
     <!--end::Theme mode setup on page load-->
     <!--begin::Root-->
@@ -34,11 +47,11 @@
         <!--begin::Page bg image-->
         <style>
             body {
-                background-image: url('{{ asset(' media/auth/bg7.jpg') }}');
+                background-image: url('{{ asset('assets/media/auth/bg7.jpg') }}');
             }
 
             [data-bs-theme="dark"] body {
-                background-image: url('{{ asset(' media/auth/bg7-dark.jpg') }}');
+                background-image: url('{{ asset('assets/ media/auth/bg7-dark.jpg') }}');
             }
         </style>
         <!--end::Page bg image-->
@@ -79,8 +92,8 @@
         var hostUrl = "assets/";
     </script>
     <!--begin::Global Javascript Bundle(mandatory for all pages)-->
-    <script src="{{ asset('plugins/global/plugins.bundle.js') }}"></script>
-    <script src="{{ asset('js/scripts.bundle.js') }}"></script>
+    <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
+    <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
     <!--end::Global Javascript Bundle-->
     <!--end::Javascript-->
 </body>

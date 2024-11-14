@@ -132,7 +132,11 @@ var KTAccountSettingsProfileDetails = (function () {
                                     },
                                     errorSwal
                                 )
-                            );
+                            ).then(() => {
+                                if (response.status == "success") {
+                                    window.location.reload();
+                                }
+                            });
                         })
                         .fail((xhr, status, error) => {
                             // Remove loading indication
@@ -144,7 +148,8 @@ var KTAccountSettingsProfileDetails = (function () {
                             Swal.fire(
                                 Object.assign(
                                     {
-                                        text: "Failed create user!. " + error,
+                                        text:
+                                            "Failed update profile!. " + error,
                                         icon: "error",
                                     },
                                     errorSwal

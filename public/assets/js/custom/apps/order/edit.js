@@ -1,34 +1,24 @@
 "use strict";
 
-// Close modal handler
-window.closeModal = function closeModal(target = "#kt_modal_add_permission") {
-    setTimeout(() => {
-        $("button.swal2-confirm.btn.btn-primary").attr({
-            "data-bs-dismiss": "modal",
-            "data-bs-target": target,
-        });
-    }, 50);
-};
+let KTUpdateVillage = (function () {
+    let villageId, oldName, currentName;
+    const element = document.getElementById("kt_modal_edit_village");
+    const form = element.querySelector("#kt_modal_edit_village_form");
 
-// Class definition
-var KTUsersAddPermission = (function () {
-    // Shared variables
-    const element = document.getElementById("kt_modal_add_permission");
-    const form = element.querySelector("#kt_modal_add_permission_form");
-    const token = $("meta[name='csrf-token']").attr("content");
-    const modal = new bootstrap.Modal(element);
-
-    // Init add schedule modal
-    var initAddPermission = () => {
-        window.token = token;
-
-        // Init form validation rules. For more info check the FormValidation plugin's official documentation:https://formvalidation.io/
-        var validator = FormValidation.formValidation(form, {
+    let initUpdateVillage = () => {
+        let validator = FormValidation.formValidation(form, {
             fields: {
-                permission_name: {
+                name: {
                     validators: {
                         notEmpty: {
-                            message: "Permission name is required",
+                            message: "Name is required",
+                        },
+                    },
+                },
+                subdistrict_id: {
+                    validators: {
+                        notEmpty: {
+                            message: "Kecamatan is required",
                         },
                     },
                 },
@@ -44,13 +34,12 @@ var KTUsersAddPermission = (function () {
             },
         });
 
-        // Close button handler
         const closeButton = element.querySelector(
-            '[data-kt-permissions-modal-action="close"]'
+            '[data-kt-villages-modal-action="close"]'
         );
         closeButton.addEventListener("click", (e) => {
             e.preventDefault();
-            closeModal();
+            closeModal("#kt_modal_edit_village");
 
             Swal.fire({
                 text: "Are you sure you would like to close?",
@@ -65,64 +54,58 @@ var KTUsersAddPermission = (function () {
                 },
             }).then(function (result) {
                 if (result.value) {
-                    form.reset(); // Reset form
+                    form.reset();
                 }
             });
         });
 
-        // Cancel button handler
-        const cancelButton = element.querySelector(
-            '[data-kt-permissions-modal-action="cancel"]'
-        );
-        cancelButton.addEventListener("click", (e) => {
+        $(document).on("click", ".edit-village", function (e) {
             e.preventDefault();
-            closeModal();
 
-            Swal.fire({
-                text: "Are you sure you would like to cancel?",
-                icon: "warning",
-                showCancelButton: true,
-                buttonsStyling: false,
-                confirmButtonText: "Yes, cancel it!",
-                cancelButtonText: "No, return",
-                customClass: {
-                    confirmButton: "btn btn-primary",
-                    cancelButton: "btn btn-active-light",
-                },
-            }).then(function (result) {
-                if (result.value) {
-                    form.reset(); // Reset form
-                } else if (result.dismiss === "cancel") {
-                    Swal.fire({
-                        text: "Your form has not been cancelled!.",
-                        icon: "error",
-                        buttonsStyling: false,
-                        confirmButtonText: "Ok, got it!",
-                        customClass: {
-                            confirmButton: "btn btn-primary",
-                        },
-                    });
-                }
+            villageId = $(this).data("id");
+
+            $.ajax({
+                url: `/villages/${villageId}`,
+                type: "GET",
+            }).then((response) => {
+                oldName = response.name;
+
+                form.querySelector("[name='name']").value = oldName;
+                form.querySelector("[name='subdistrict_id']").value =
+                    response.subdistrict_id;
+
+                form.querySelector("[name='subdistrict_id']").dispatchEvent(
+                    new Event("change")
+                );
             });
         });
 
-        // Submit button handler
         const submitButton = element.querySelector(
-            '[data-kt-permissions-modal-action="submit"]'
+            '[data-kt-villages-modal-action="submit"]'
         );
         submitButton.addEventListener("click", function (e) {
-            // Prevent default button action
             e.preventDefault();
 
             // Validate form before submit
             if (validator) {
                 validator.validate().then(function (status) {
                     if (status == "Valid") {
-                        // Show loading indication
                         submitButton.setAttribute("data-kt-indicator", "on");
-
-                        // Disable button to avoid multiple click
                         submitButton.disabled = true;
+
+                        currentName = form.querySelector('[name="name"]').value;
+
+                        const data = {
+                            subdistrict_id: form.querySelector(
+                                '[name="subdistrict_id"]'
+                            ).value,
+                            _token: token,
+                        };
+
+                        if (currentName !== oldName) {
+                            data.name =
+                                form.querySelector('[name="name"]').value;
+                        }
 
                         const errorSwal = {
                             buttonsStyling: false,
@@ -134,30 +117,22 @@ var KTUsersAddPermission = (function () {
                         };
 
                         $.ajax({
-                            url: `/permissions`,
+                            url: `/villages/${villageId}`,
                             type: "POST",
                             cache: false,
-                            data: {
-                                name: form
-                                    .querySelector('[name="permission_name"]')
-                                    .value.toLowerCase(),
-                                _token: token,
+                            data: data,
+                            headers: {
+                                "X-HTTP-Method-Override": "PUT",
                             },
                         })
                             .done((response) => {
-                                closeModal();
-
-                                // Remove loading indication
+                                submitButton.disabled = false;
                                 submitButton.removeAttribute(
                                     "data-kt-indicator"
                                 );
 
-                                // Enable button
-                                submitButton.disabled = false;
+                                closeModal("#kt_modal_edit_village");
 
-                                if (response.status == "success") closeModal();
-
-                                // Show popup confirmation
                                 Swal.fire(
                                     Object.assign(
                                         {
@@ -168,18 +143,23 @@ var KTUsersAddPermission = (function () {
                                     )
                                 ).then(() => {
                                     if (response.status == "success") {
-                                        form.reset(); // Reset form
+                                        form.reset();
                                         datatable.draw();
                                     }
                                 });
                             })
                             .fail((xhr, status, error) => {
+                                submitButton.removeAttribute(
+                                    "data-kt-indicator"
+                                );
+
+                                submitButton.disabled = false;
+
                                 Swal.fire(
                                     Object.assign(
                                         {
                                             text:
-                                                "Failed create permission!. " +
-                                                error,
+                                                "Failed update data!. " + error,
                                             icon: "error",
                                         },
                                         errorSwal
@@ -187,7 +167,6 @@ var KTUsersAddPermission = (function () {
                                 );
                             });
                     } else {
-                        // Show popup warning. For more info check the plugin's official documentation: https://sweetalert2.github.io/
                         Swal.fire({
                             text: "Sorry, looks like there are some errors detected, please try again.",
                             icon: "error",
@@ -204,14 +183,12 @@ var KTUsersAddPermission = (function () {
     };
 
     return {
-        // Public functions
         init: function () {
-            initAddPermission();
+            initUpdateVillage();
         },
     };
 })();
 
-// On document ready
 KTUtil.onDOMContentLoaded(function () {
-    KTUsersAddPermission.init();
+    KTUpdateVillage.init();
 });

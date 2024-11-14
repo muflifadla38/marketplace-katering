@@ -1,9 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MenuController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,24 +21,23 @@ Route::controller(AuthController::class)->middleware('guest')->group(function ()
     Route::get('/', 'login')->name('auth.login');
     Route::post('/', 'authenticate')->name('auth.authenticate');
 
-    Route::get('register', 'register')->name('auth.register');
-    Route::post('register', 'store')->name('auth.store');
+    Route::get('register/{role}', 'register')->name('auth.register');
+    Route::post('register/{role}', 'store')->name('auth.store');
 });
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('auth.logout');
 
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('home', [DashboardController::class, 'index'])->name('dashboard.index');
 
     Route::controller(ProfileController::class)->group(function () {
         Route::get('profile', 'index')->name('profile.index');
         Route::put('profile', 'update')->name('profile.update');
     });
+    Route::get('users', [ProfileController::class, 'users'])->name('profile.users');
 
-    // Route::resource('users', UserController::class)->except(['create', 'edit']);
-
-    // Route::controller(ActivityLogController::class)->middleware('features:activity-log')->group(function () {
-    //     Route::get('activity-logs/table', 'table')->name('activity-logs.table');
-    //     Route::resource('activity-logs', ActivityLogController::class)->only(['index', 'show']);
-    // });
+    Route::middleware('role:1')->group(function () {
+        Route::get('menus/table', [MenuController::class, 'table'])->name('menus.table');
+        Route::resource('menus', MenuController::class)->except(['create', 'edit']);
+    });
 });

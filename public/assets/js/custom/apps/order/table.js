@@ -1,106 +1,48 @@
 "use strict";
 
-function roleColor(role) {
-    let color;
-    switch (role) {
-        case "administrator":
-            color = "danger";
-            break;
-        case "supervisor":
-            color = "success";
-            break;
-        case "manager":
-            color = "primary";
-            break;
-        default:
-            color = "secondary";
-            break;
-    }
+let KTVillage = (function () {
+    let datatable,
+        table,
+        filterForm = document.querySelector(
+            '[data-kt-villages-table-filter="form"]'
+        );
 
-    return color;
-}
-
-// Class definition
-var KTUsersPermissionsList = (function () {
-    // Shared variables
-    var datatable;
-    var table;
-
-    // Init add schedule modal
-    var initPermissionsList = () => {
-        // Set date data order
-        const tableRows = table.querySelectorAll("tbody tr");
-
-        tableRows.forEach((row) => {
-            const dateRow = row.querySelectorAll("td");
-            const realDate = moment(
-                dateRow[2].innerHTML,
-                "DD MMM YYYY, LT"
-            ).format(); // select date from 2nd column in table
-            dateRow[2].setAttribute("data-order", realDate);
-        });
-
-        // Init datatable --- more info on datatables: https://datatables.net/manual/
+    let initVillages = () => {
         datatable = $(table).DataTable({
             searchDelay: 500,
             processing: true,
             serverSide: true,
-            order: [[0, "desc"]],
+            order: [[0, "asc"]],
             ajax: {
                 url: $("#table-url").val(),
             },
             info: false,
             columns: [
-                { data: "name" },
+                { data: "name", name: "name" },
                 {
-                    data: "roles.name",
-                    name: "roles.name",
+                    data: "subdistrict.name",
+                    name: "subdistrict.name",
                 },
-                { data: "created_at" },
-                { data: "action", orderable: false, searchable: false },
+                {
+                    data: "action",
+                    name: "action",
+                    orderable: false,
+                    searchable: false,
+                },
             ],
             columnDefs: [
                 {
-                    targets: 0,
-                    orderable: true,
-                    className: "text-capitalize",
-                    render: function (data, type, row) {
-                        return data.replaceAll('-', ' ');
-                    }
-                },
-                {
-                    targets: 1,
-                    orderable: true,
-                    render: function (data, type, row) {
-                        let roleElement = "";
-                        data.map((role) => {
-                            roleElement += `<span class="badge badge-light-${roleColor(
-                                role
-                            )} fs-7 fw-bold text-capitalize m-1">${role}</span>`;
-                        });
-                        return roleElement;
-                    },
-                },
-                {
-                    targets: 2,
-                    orderable: true,
-                    render: function (data, type, row) {
-                        return moment(data).format("D MMMM YYYY");
-                    },
-                },
-                {
-                    orderable: false,
-                    targets: 3,
+                    targets: -1,
                     className: "text-end",
                     render: function (data, type, row) {
                         return `
-                        <button class="edit-permission btn btn-icon btn-bg-light btn-active-color-success btn-sm me-1" data-bs-toggle="modal" data-bs-target="#kt_modal_update_permission" data-id="${data}">
+                        <button class="edit-village btn btn-icon btn-bg-light btn-active-color-success btn-sm me-1" data-bs-toggle="modal" data-bs-target="#kt_modal_edit_village" data-id="${data}">
                             <i class="ki-duotone ki-pencil fs-2">
                                 <span class="path1"></span>
                                 <span class="path2"></span>
                             </i>
                         </button>
-                        <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" data-kt-permissions-table-filter="delete_row" data-id="${data}">
+                        <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" data-kt-villages-table-filter="delete_row" data-id="${data}">
                             <i class="ki-duotone ki-trash fs-2">
                                 <span class="path1"></span>
                                 <span class="path2"></span>
@@ -110,35 +52,37 @@ var KTUsersPermissionsList = (function () {
                             </i>
                         </button>`;
                     },
-                }, // Disable ordering on column 3 (actions)
+                },
             ],
         });
 
-        // Global/ accessible datatable
         window.datatable = datatable;
 
-        // Re-init functions on every table re-draw -- more info: https://datatables.net/reference/event/draw
         datatable.on("draw", function () {
             handleDeleteRows();
             KTMenu.createInstances();
         });
     };
 
-    // Search Datatable --- official docs reference: https://datatables.net/reference/api/search()
-    var handleSearchDatatable = () => {
+    let handleSearchDatatable = () => {
         const filterSearch = document.querySelector(
-            '[data-kt-permissions-table-filter="search"]'
+            '[data-kt-villages-table-filter="search"]'
         );
-        filterSearch.addEventListener("keyup", function (e) {
-            datatable.search(e.target.value).draw();
+
+        let searchTimeout;
+        filterSearch.addEventListener("input", function (e) {
+            clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(() => {
+                datatable.search(e.target.value).draw();
+            }, 700);
         });
     };
 
-    // Delete user
-    var handleDeleteRows = () => {
+    let handleDeleteRows = () => {
         // Select all delete buttons
         const deleteButtons = table.querySelectorAll(
-            '[data-kt-permissions-table-filter="delete_row"]'
+            '[data-kt-villages-table-filter="delete_row"]'
         );
 
         deleteButtons.forEach((d) => {
@@ -148,18 +92,11 @@ var KTUsersPermissionsList = (function () {
 
                 // Select parent row
                 const parent = e.target.closest("tr");
+                const className = parent.querySelectorAll("td")[0].innerText;
 
-                // Get permission name
-                const permissionName =
-                parent.querySelectorAll("td")[0].innerText;
-
-                // SweetAlert2 pop up --- official docs reference: https://sweetalert2.github.io/
-                const permissionId = $(this).data("id");
+                const classId = $(this).data("id");
                 Swal.fire({
-                    text:
-                        "Are you sure you want to delete " +
-                        permissionName +
-                        "?",
+                    text: "Are you sure you want to delete " + className + "?",
                     icon: "warning",
                     showCancelButton: true,
                     buttonsStyling: false,
@@ -172,7 +109,7 @@ var KTUsersPermissionsList = (function () {
                 }).then(function (result) {
                     if (result.value) {
                         Swal.fire({
-                            text: "Deleting " + permissionName,
+                            text: "Deleting " + className,
                             allowOutsideClick: false,
                             allowEscapeKey: false,
                             allowEnterKey: false,
@@ -193,9 +130,8 @@ var KTUsersPermissionsList = (function () {
                                     },
                                 };
 
-                                //fetch to delete data
                                 $.ajax({
-                                    url: `/permissions/${permissionId}`,
+                                    url: `/villages/${classId}`,
                                     type: "DELETE",
                                     cache: false,
                                     data: {
@@ -218,7 +154,6 @@ var KTUsersPermissionsList = (function () {
                                                     : {}
                                             )
                                         ).then(() => {
-                                            // delete row data from server and re-draw datatable
                                             datatable.draw();
                                         });
                                     })
@@ -228,7 +163,7 @@ var KTUsersPermissionsList = (function () {
                                                 {
                                                     text:
                                                         "Failed delete " +
-                                                        permissionName +
+                                                        className +
                                                         "!. " +
                                                         jqXHR.responseJSON
                                                             .message,
@@ -242,7 +177,7 @@ var KTUsersPermissionsList = (function () {
                         });
                     } else if (result.dismiss === "cancel") {
                         Swal.fire({
-                            text: permissionName + " was not deleted.",
+                            text: className + " was not deleted.",
                             icon: "error",
                             buttonsStyling: false,
                             confirmButtonText: "Ok, got it!",
@@ -256,23 +191,54 @@ var KTUsersPermissionsList = (function () {
         });
     };
 
+    let handleFilterDatatable = () => {
+        const filterSubmit = filterForm.querySelector(
+                '[data-kt-villages-table-filter="filter"]'
+            ),
+            filterSubdistrict = filterForm.querySelector("#subdistrict-filter");
+
+        // Filter datatable on submit
+        filterSubmit.addEventListener("click", function () {
+            datatable.column(1).search(filterSubdistrict.value).draw();
+        });
+    };
+
+    let handleResetForm = () => {
+        // Select reset button
+        const filterResetButton = document.querySelector(
+            '[data-kt-villages-table-filter="reset"]'
+        );
+
+        const filterSelect = filterForm.querySelectorAll("select");
+
+        // Reset filter
+        filterResetButton.addEventListener("click", function () {
+            // Reset filter value
+            filterSelect.forEach((e) => {
+                $(e).val("").trigger("change");
+            });
+
+            datatable.column(1).search("").draw();
+        });
+    };
+
     return {
-        // Public functions
         init: function () {
-            table = document.querySelector("#kt_permissions_table");
+            table = document.querySelector("#kt_villages_table");
 
             if (!table) {
                 return;
             }
 
-            initPermissionsList();
-            handleSearchDatatable();
+            initVillages();
             handleDeleteRows();
+            handleSearchDatatable();
+            // handleFilterDatatable();
+            // handleResetForm();
         },
     };
 })();
 
-// On document ready
 KTUtil.onDOMContentLoaded(function () {
-    KTUsersPermissionsList.init();
+    KTVillage.init();
 });

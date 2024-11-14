@@ -1,35 +1,38 @@
 "use strict";
 
-function initFormValidationAndSubmit(permissionId) {
-    {
-        $("#permission_id").val(permissionId);
+let KTUpdateMenu = (function () {
+    let menuId, oldName, currentName;
+    const element = document.getElementById("kt_modal_edit_menu");
+    const form = element.querySelector("#kt_modal_edit_menu_form");
 
-        // Get & Set permission data
-        $.ajax({
-            url: `permissions/${permissionId}`,
-            type: "GET",
-        }).then((response) => {
-            $("[name='permission_name']").val(response.name);
-        });
-    }
-}
-
-// Class definition
-var KTUsersUpdatePermission = (function () {
-    // Shared variables
-    const element = document.getElementById("kt_modal_update_permission");
-    const form = element.querySelector("#kt_modal_update_permission_form");
-    const modal = new bootstrap.Modal(element);
-
-    // Init add schedule modal
-    var initUpdatePermission = () => {
-        // Init form validation rules. For more info check the FormValidation plugin's official documentation:https://formvalidation.io/
-        var validator = FormValidation.formValidation(form, {
+    let initUpdateMenu = () => {
+        let validator = FormValidation.formValidation(form, {
             fields: {
-                permission_name: {
+                name: {
                     validators: {
                         notEmpty: {
-                            message: "Permission name is required",
+                            message: "Name is required",
+                        },
+                    },
+                },
+                price: {
+                    validators: {
+                        notEmpty: {
+                            message: "Price is required",
+                        },
+                    },
+                },
+                description: {
+                    validators: {
+                        notEmpty: {
+                            message: "Description is required",
+                        },
+                    },
+                },
+                category: {
+                    validators: {
+                        notEmpty: {
+                            message: "Category is required",
                         },
                     },
                 },
@@ -45,13 +48,12 @@ var KTUsersUpdatePermission = (function () {
             },
         });
 
-        // Close button handler
         const closeButton = element.querySelector(
-            '[data-kt-permissions-modal-action="close"]'
+            '[data-kt-menus-modal-action="close"]'
         );
         closeButton.addEventListener("click", (e) => {
             e.preventDefault();
-            closeModal("#kt_modal_update_permission");
+            closeModal("#kt_modal_edit_menu");
 
             Swal.fire({
                 text: "Are you sure you would like to close?",
@@ -66,66 +68,64 @@ var KTUsersUpdatePermission = (function () {
                 },
             }).then(function (result) {
                 if (result.value) {
-                    form.reset(); // Reset form
-                    modal.hide(); // Hide modal
+                    form.reset();
                 }
             });
         });
 
-        // Cancel button handler
-        const cancelButton = element.querySelector(
-            '[data-kt-permissions-modal-action="cancel"]'
-        );
-        cancelButton.addEventListener("click", (e) => {
+        $(document).on("click", ".edit-menu", function (e) {
             e.preventDefault();
-            closeModal("#kt_modal_update_permission");
 
-            Swal.fire({
-                text: "Are you sure you would like to cancel?",
-                icon: "warning",
-                showCancelButton: true,
-                buttonsStyling: false,
-                confirmButtonText: "Yes, cancel it!",
-                cancelButtonText: "No, return",
-                customClass: {
-                    confirmButton: "btn btn-primary",
-                    cancelButton: "btn btn-active-light",
-                },
-            }).then(function (result) {
-                if (result.value) {
-                    form.reset(); // Reset form
-                    modal.hide(); // Hide modal
-                } else if (result.dismiss === "cancel") {
-                    Swal.fire({
-                        text: "Your form has not been cancelled!.",
-                        icon: "error",
-                        buttonsStyling: false,
-                        confirmButtonText: "Ok, got it!",
-                        customClass: {
-                            confirmButton: "btn btn-primary",
-                        },
-                    });
+            menuId = $(this).data("id");
+
+            $.ajax({
+                url: `/menus/${menuId}`,
+                type: "GET",
+            }).then((response) => {
+                oldName = response.name;
+
+                form.querySelector("[name='name']").value = oldName;
+                form.querySelector("[name='price']").value = response.price;
+                form.querySelector("[name='description']").value =
+                    response.description;
+
+                form.querySelector("[name='category']").value =
+                    response.category;
+                form.querySelector("[name='category']").dispatchEvent(
+                    new Event("change")
+                );
+
+                if (response.image) {
+                    const imageWrapper = $(".image-input-wrapper").last()[0];
+                    imageWrapper.style.cssText = `background-image: url('storage/menus/${response.image}')`;
                 }
             });
         });
 
-        // Submit button handler
         const submitButton = element.querySelector(
-            '[data-kt-permissions-modal-action="submit"]'
+            '[data-kt-menus-modal-action="submit"]'
         );
         submitButton.addEventListener("click", function (e) {
-            // Prevent default button action
             e.preventDefault();
 
             // Validate form before submit
             if (validator) {
                 validator.validate().then(function (status) {
                     if (status == "Valid") {
-                        // Show loading indication
                         submitButton.setAttribute("data-kt-indicator", "on");
-
-                        // Disable button to avoid multiple click
                         submitButton.disabled = true;
+
+                        currentName = form.querySelector('[name="name"]').value;
+
+                        const data = {
+                            price: form.querySelector('[name="price"]').value,
+                            _token: token,
+                        };
+
+                        if (currentName !== oldName) {
+                            data.name =
+                                form.querySelector('[name="name"]').value;
+                        }
 
                         const errorSwal = {
                             buttonsStyling: false,
@@ -136,32 +136,45 @@ var KTUsersUpdatePermission = (function () {
                             },
                         };
 
-                        const permissionId = $("#permission_id").val();
+                        const formData = new FormData();
+                        formData.append("image", $("#edit-image")[0].files[0]);
+                        formData.append(
+                            "name",
+                            form.querySelector('[name="name"]').value
+                        );
+                        formData.append(
+                            "price",
+                            form.querySelector('[name="price"]').value
+                        );
+                        formData.append(
+                            "description",
+                            form.querySelector('[name="description"]').value
+                        );
+                        formData.append(
+                            "category",
+                            form.querySelector('[name="category"]').value
+                        );
+
                         $.ajax({
-                            url: `/permissions/${permissionId}`,
+                            url: `/menus/${menuId}`,
                             type: "POST",
                             cache: false,
-                            data: {
-                                name: form
-                                    .querySelector('[name="permission_name"]')
-                                    .value.toLowerCase(),
-                                _token: token,
-                            },
+                            data: formData,
+                            contentType: false,
+                            processData: false,
                             headers: {
                                 "X-HTTP-Method-Override": "PUT",
+                                "X-CSRF-TOKEN": token,
                             },
                         })
                             .done((response) => {
+                                submitButton.disabled = false;
                                 submitButton.removeAttribute(
                                     "data-kt-indicator"
                                 );
 
-                                // Enable button
-                                submitButton.disabled = false;
+                                closeModal("#kt_modal_edit_menu");
 
-                                closeModal("#kt_modal_update_permission");
-
-                                // Show popup confirmation
                                 Swal.fire(
                                     Object.assign(
                                         {
@@ -171,28 +184,24 @@ var KTUsersUpdatePermission = (function () {
                                         errorSwal
                                     )
                                 ).then(() => {
-                                    // re-draw datatable
                                     if (response.status == "success") {
-                                        form.reset(); // Reset form
+                                        form.reset();
                                         datatable.draw();
                                     }
                                 });
                             })
                             .fail((xhr, status, error) => {
-                                // Remove loading indication
                                 submitButton.removeAttribute(
                                     "data-kt-indicator"
                                 );
 
-                                // Enable button
                                 submitButton.disabled = false;
 
                                 Swal.fire(
                                     Object.assign(
                                         {
                                             text:
-                                                "Failed update permission!. " +
-                                                error,
+                                                "Failed update data!. " + error,
                                             icon: "error",
                                         },
                                         errorSwal
@@ -200,7 +209,6 @@ var KTUsersUpdatePermission = (function () {
                                 );
                             });
                     } else {
-                        // Show popup warning. For more info check the plugin's official documentation: https://sweetalert2.github.io/
                         Swal.fire({
                             text: "Sorry, looks like there are some errors detected, please try again.",
                             icon: "error",
@@ -217,20 +225,12 @@ var KTUsersUpdatePermission = (function () {
     };
 
     return {
-        // Public functions
         init: function () {
-            initUpdatePermission();
+            initUpdateMenu();
         },
     };
 })();
 
-// On document ready
 KTUtil.onDOMContentLoaded(function () {
-    KTUsersUpdatePermission.init();
-
-    $(document).on("click", ".edit-permission", function (d) {
-        d.preventDefault();
-
-        initFormValidationAndSubmit($(this).data("id"));
-    });
+    KTUpdateMenu.init();
 });
